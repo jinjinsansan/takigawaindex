@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500;700;900&display=swap');
+
+@layer base {
+  body {
+    @apply bg-gray-100 text-gray-900;
+    font-family: 'Noto Sans JP', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  
+  /* ネット競馬風のテーブルスタイル */
+  table {
+    @apply w-full border-collapse;
+  }
+  
+  th {
+    @apply bg-gray-200 text-xs font-bold text-gray-700 p-2 border border-gray-300;
+  }
+  
+  td {
+    @apply bg-white text-sm p-2 border border-gray-300;
+  }
+}
+
+@layer components {
+  /* ボタンスタイル */
+  .btn-primary {
+    @apply bg-amber-500 text-white font-bold py-2 px-4 rounded hover:bg-amber-600 transition-colors inline-flex items-center;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded hover:bg-gray-300 transition-colors;
+  }
+  
+  /* LINE風ボタン */
+  .btn-line {
+    @apply bg-[#00B900] text-white font-bold py-2 px-4 rounded hover:bg-[#00A000] transition-colors inline-flex items-center gap-2;
+  }
+}

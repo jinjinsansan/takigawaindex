@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ユーザーモデル
+model User {
+  id                String    @id @default(cuid())
+  lineId            String    @unique
+  email             String?   @unique
+  name              String?
+  profileImage      String?
+  isAdmin           Boolean   @default(false)
+  points            Int       @default(0)
+  isLineFriend      Boolean   @default(false)
+  friendBonusGiven  Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  sessions          Session[]
+  pointTransactions PointTransaction[]
+  viewHistories     ViewHistory[]
+  payments          Payment[]
+
+  @@index([lineId])
+  @@index([email])
+}
+
+// セッション管理
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// レース情報
+model Race {
+  id              String    @id @default(cuid())
+  raceDate        DateTime
+  venue           String    // 競馬場
+  raceNumber      Int       // レース番号
+  raceName        String    // レース名
+  raceType        String    // 芝/ダート
+  distance        Int       // 距離
+  weather         String?   // 天候
+  trackCondition  String?   // 馬場状態
+  postTime        String    // 発走時刻
+  gradeClass      String?   // グレード/クラス
+  prizeFirst      Int?      // 1着賞金
+  noteUrl         String?   // NOTE記事URL
+  pointCost       Int       @default(500) // 閲覧に必要なポイント
+  isFree          Boolean   @default(false) // 無料公開フラグ
+  isPublished     Boolean   @default(false) // 公開/非公開
+  category        String?   // central, local, g1, g2g3, free
+  showOnTop       Boolean   @default(false) // トップページ表示フラグ
+  topOrder        Int?      // トップページ表示順序
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  horses          Horse[]
+  viewHistories   ViewHistory[]
+
+  @@unique([raceDate, venue, raceNumber])
+  @@index([raceDate])
+  @@index([venue])
+  @@index([isPublished])
+  @@index([category])
+  @@index([showOnTop])
+}
+
+// 出走馬情報
+model Horse {
+  id              String    @id @default(cuid())
+  raceId          String
+  horseNumber     Int       // 馬番
+  horseName       String    // 馬名
+  age             Int       // 年齢
+  sex             String    // 性別
+  weight          Int       // 馬体重
+  weightChange    Int?      // 体重増減
+  jockey          String    // 騎手
+  trainer         String    // 調教師
+  odds            Float?    // オッズ
+  popularity      Int?      // 人気
+  takigawaIndex   Float?    // 瀧川指数
+  comment         String?   // コメント
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  race            Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, horseNumber])
+  @@index([raceId])
+}
+
+// ポイント取引履歴
+model PointTransaction {
+  id              String    @id @default(cuid())
+  userId          String
+  amount          Int       // ポイント数（正：追加、負：使用）
+  type            String    // purchase, view, bonus
+  description     String
+  relatedId       String?   // 関連ID（購入ID、レースIDなど）
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// レース閲覧履歴
+model ViewHistory {
+  id              String    @id @default(cuid())
+  userId          String
+  raceId          String
+  viewedAt        DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  race            Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, raceId])
+  @@index([userId])
+  @@index([raceId])
+  @@index([viewedAt])
+}
+
+// 決済情報
+model Payment {
+  id              String    @id @default(cuid())
+  userId          String
+  stripePaymentId String    @unique
+  amount          Int       // 金額（円）
+  points          Int       // 購入ポイント数
+  status          String    // pending, completed, failed
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// お知らせ情報
+model Notice {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  type        String    // campaign, maintenance, update
+  isNew       Boolean   @default(true)
+  isPublished Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isPublished])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// 瀧川指数特徴セクション
+model Feature {
+  id          String    @id @default(cuid())
+  icon        String    // アイコン名
+  title       String
+  description String
+  order       Int
+  isPublished Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isPublished])
+  @@index([order])
+}
